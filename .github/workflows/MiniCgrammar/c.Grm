@@ -1,0 +1,245 @@
+% Grammar:
+#pragma -idchars "#<./>"
+ #pragma -comment
+define program
+        [opt id][NL]
+	[c_function]
+end define
+
+tokens
+	id ...|"[$@&]\i*"
+end tokens
+
+define c_function
+	[function_head] [NL]
+	{ [NL][IN]
+	  [function_body][EX]
+	}
+end define
+define function_head
+	[return_type] [function_name]()
+end define
+
+define function_name
+	[id]
+end define
+
+comments
+    /*  */
+    //
+end comments
+
+
+define function_body
+	[repeat statement] 
+end define
+define statement
+	[variable_declaration]
+	|[expression]
+	|[conditionExpression]
+	|[assignExpr]
+	|[loops]
+	|[switchStatement]
+	|[commentsStatement]
+	|[print_statement] 
+	|[return_statement]
+
+end define
+
+define commentsStatement
+[NL]	[comment] [NL]
+end define
+
+define return_type
+	int
+end define
+
+define variable_declaration
+	[ID_or_Number] [ID_or_Number];[NL]
+	|[ID_or_Number] [repeat varName];[NL]
+	|[ID_or_Number] [ID_or_Number] [repeat varName];[NL]
+end define
+
+define varName
+[ID_or_Number]|[ID_or_Number],
+end define
+
+define ID_or_Number
+	[id]
+	|[number]
+end define
+
+define expression
+	[ID_or_Number]
+	|[ID_or_Number] [op] [ID_or_Number]
+	| [expression] [conditionOP] [expression]
+	| '([expression] [op] [expression])
+
+	|[expression] [op] [expression];[NL]
+	|[expression][op];[NL]
+	|[ID_or_Number][op]
+	|[ID_or_Number][op][NL]
+	|[stringlit]
+	|[charlit]
+end define
+
+compounds
+     ==	&&  ++ -- || <= >= -> <-> 
+
+end compounds
+
+define op 
+  '+ | '- |'= | '/ |'++ | '* |'>|'< |'== |'<= |'mod | 'div  
+end define
+
+
+define assignExpr
+	[ID_or_Number] [assignOP] [expression];  [NL]
+	|[ID_or_Number] [assignOP] [charExpression]; [NL]
+end define
+
+define assignOP
+    '=
+end define
+
+define charExpression
+	[charlit]
+	| [charExpression] '+ [charExpression]
+end define
+
+define loops
+   [whileLoop]|[forLoopA]|[forLoopMulti] |[dowhileLoop]| [forLoop] 
+end define 
+
+define whileLoop
+	while [ifCondition ] [NL]
+        '{ [NL][IN]
+	[blockCode] [EX][NL]
+	'} [NL]
+end define
+define dowhileLoop
+        do [NL]
+        '{ [NL][IN]
+		[blockCode] [NL][EX]
+	'}[NL] 
+	while [ifCondition ]; [NL]
+end define
+
+define blockCode
+     [repeat statement]   %unless the code is innerCode only one statement
+end define
+
+define conditionExpression
+    [ifStatementA] 
+    | [elseStatementA]
+    | [ifStatement] 
+    | [elseStatement]
+end define 
+
+define ifStatement
+    if [ifCondition][NL] 
+    '{
+        [NL][IN] [blockCode] [NL][EX]
+	'}[NL]
+end define
+
+define elseStatement
+    else [NL]
+	'{[NL][IN] 
+    [blockCode] [NL][EX]
+    '}[NL]
+end define
+
+define ifStatementA
+    if [ifCondition]    [NL] [IN]
+    [blockCode] [NL][EX]
+    
+end define
+
+define elseStatementA
+    else [NL][IN]
+	[blockCode] [NL][EX]
+end define    
+
+
+define conditionOP
+    '> | '< | '>= | '<= | '= | '<> |'&& |'||
+end define    
+
+define ifCondition
+	[expression] 
+        |([expression] [conditionOP] [expression]) 
+        |
+	('![expression] [conditionOP] '![expression])
+end define
+define forLoopA
+        for '([expression];[expression];[expression]')[NL][IN]
+         [blockCode] [NL][EX]
+end define
+define forLoop
+        for '([expression];[expression];[expression]')[NL]
+	'{ 	[NL][IN]
+	 [blockCode] [NL][EX]
+	'}	[NL]
+end define
+
+define forLoopMulti
+        for ([expression];[expression];[expression])[NL]
+	'{ [NL][IN]
+                 [blockCode] [EX][NL]
+	'} [NL]
+end define
+
+
+define and_or
+	'&& |'||
+end define
+
+
+define dowhile
+        do [NL]
+	'{ [NL][IN]
+	[blockCode];[NL]
+	'}[NL]
+	while [expression];[NL]
+end define
+define switchStatement
+	switch([ID_or_Number])[NL]
+       '{    [NL][IN]
+	[repeat caseExpression][EX]
+'}[NL]
+end define
+
+define caseOption
+	[charlit]|[ID_or_Number]
+end define
+
+define caseExpression
+        case [caseOption]': [NL][IN]
+	[print_statement]
+	break; [NL][EX]
+	|
+        default': [NL][IN]
+        [print_statement][EX]
+end define
+
+define print_statement
+	printf([stringlit])'; [NL]
+	| scanf([stringlit] ,[id])';[NL]
+	| printf([stringlit], [id] )';[NL]
+end define
+
+
+define return_statement
+	return [return_value]; [NL][EX]
+end define
+
+define return_value
+	[number]
+end define
+
+% Rules:
+%function main
+%    match [program]
+%	P[program]
+%end function
